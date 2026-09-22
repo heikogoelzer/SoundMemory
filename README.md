@@ -1,18 +1,95 @@
 # SoundMemory
-Heiko Gölzer 2026
 
-A sound memory game 
+A sound-based memory game. Heiko Gölzer 2026.
 
-14 short sounds, each appearing twice on a 4x7 grid of 28 cards. Click a card to hear
-and reveal its sound; find all matching pairs to win.
+## How to Play
+
+14 short sounds, each appearing twice on a **4×7 grid** of 28 cards. Click (or tap) a
+card to hear and reveal its sound. Reveal two cards per bid — if the sounds match,
+the pair celebrates with a rainbow flash and vanishes; if not, both flip back after
+500 ms. Find all 14 pairs to win. The score counter (`B:bids M:matches`) stays in
+the lower-right corner.
+
+## Tech Stack
+
+- **p5.js 1.11.3** (CDN) — canvas, `draw`/`setup` lifecycle, `shuffle`
+- **HTML5 `Audio` API** (not p5.sound) — one `Audio` element per sound, restarted
+  via `pause()` + `currentTime = 0` to work around Safari/WebKit quirks
+- **PWA** — `manifest.json` + service worker (`sw.js`) with cache-first fetching
+  for full offline play
+
+## Architecture
+
+### Game State (`mySketch.js`)
+
+| Variable   | Type            | Purpose                                           |
+| ---------- | --------------- | ------------------------------------------------- |
+| `mapping`  | `string[]`      | Card index → sound name (shuffled, each sound ×2) |
+| `state`    | `string[]`      | Card index → `'hidden'` \| `'up'` \| `'celebrate'` \| `'done'` |
+| `choice1`  | `number\|null`  | First card of the current bid                     |
+| `locked`   | `boolean`       | True during 500 ms match/mismatch animation       |
+| `tries`    | `number`        | Completed bids (two cards revealed)               |
+| `matches`  | `number`        | Pairs found                                       |
+
+### Card States
+
+```
+hidden ──click──▶ up ──match──▶ celebrate (500 ms) ──▶ done (vanishes)
+                     └──mismatch──▶ hidden (500 ms)
+```
+
+### Rendering
+
+- Full-screen canvas (`windowWidth × windowHeight`); `noLoop()` — redraws only on
+  interaction or animation tick.
+- **5-color rainbow palette** in three intensities:
+  - `PALETTE` (pale) — hidden cards
+  - `PALETTE_DARK` (saturated) — currently revealed card
+  - `PALETTE_MID` (mid) — celebration animation
+- Tiles fill the screen with 5 % margins; sizes recompute every `draw()` so
+  `windowResized()` just calls `resizeCanvas()` + `redraw()`.
+- Matched (`done`) cards are skipped entirely — they disappear into the background.
+
+### Match Animation
+
+On a match, both cards enter `celebrate` for 500 ms. A `setInterval` ticks every
+50 ms (10 frames × 5 colors = 2 full rainbow cycles), calling `redraw()` each tick.
+After 500 ms the cards become `done` and `locked` releases.
+
+### Touch Support
+
+`touchStarted()` delegates to `mousePressed()` and returns `false` to suppress
+iOS double-tap zoom.
+
+### PWA / Offline
+
+`sw.js` pre-caches all app assets (HTML, CSS, JS, icon, all 14 MP3s, and the p5.js
+CDN URL) at install. Fetch handler is **cache-first** with network fallback.
+Cache version key: `soundmemory-cache-v0` — bump it when assets change.
 
 ## Files
 
-- `index.html` — entry page, loads p5.js and the sketch
-- `mySketch.js` — the game (grid, shuffle, matching logic)
-- `style.css` — minimal reset
-- `sw.js` — service worker for offline use
-- `manifest.json` — PWA manifest
-- `apple-touch-icon.png` — app icon
-- `sounds/` — the 14 sound files used by the game
+| File                  | Role                                            |
+| --------------------- | ----------------------------------------------- |
+| `index.html`          | Entry page; loads p5.js, sketch, CSS, registers SW |
+| `mySketch.js`         | Game logic: grid, shuffle, matching, rendering  |
+| `style.css`           | Minimal CSS reset                               |
+| `sw.js`               | Service worker (cache-first, offline support)   |
+| `manifest.json`       | PWA manifest (standalone, icons)                |
+| `apple-touch-icon.png`| App icon (180×180 / 512×512)                    |
+| `sounds/`             | 14 MP3 sound files                              |
 
+## Sounds
+
+```
+Basso  Blow  Bottle  Frog   Funk  Glass  Hero
+Morse  Ping  Pop     Purr   Sosumi  Submarine  Tink
+```
+
+## Dev Notes
+
+- `ROWS` derives from `FILES.length * 2 / COLS` (= 7); changing `COLS` or
+  `FILES` automatically adjusts the grid.
+- `PALETTE_MID` is computed at parse time with `Math.round` (not p5's `round`)
+  because p5 globals aren't available yet.
+- The game tracks **bids** (two-card attempts), not individual card clicks.
