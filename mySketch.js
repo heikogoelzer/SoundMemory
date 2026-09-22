@@ -113,6 +113,13 @@ function mousePressed() {
 	redraw();
 }
 
+// Single-tap response on touch devices (iOS fires touch events, not clicks;
+// returning false also suppresses the browser's double-tap-zoom default).
+function touchStarted() {
+	mousePressed();
+	return false;
+}
+
 // Map a click position to a card index, or null
 function cardAt(px, py) {
 	let cw = width / COLS, ch = height / ROWS;

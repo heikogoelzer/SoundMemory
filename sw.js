@@ -1,4 +1,4 @@
-const CACHE_NAME = 'soundmemory-cache-v3';
+const CACHE_NAME = 'soundmemory-cache-v4';
 
 // Add all the files your app needs to run offline (no icon and manifest)
 const ASSETS_TO_CACHE = [
