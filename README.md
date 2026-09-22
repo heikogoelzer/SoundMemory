@@ -1,5 +1,5 @@
 # SoundMemory
-# Heiko Gölzer 2026
+Heiko Gölzer 2026
 
 A sound memory game 
 
