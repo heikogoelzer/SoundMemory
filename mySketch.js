@@ -89,9 +89,23 @@ function setup() {
 	noLoop();
 }
 
+// Size and position the bank dropdown to fit the current screen (touch-friendly).
+function layoutBankSelect() {
+	let fs = Math.max(16, Math.round(min(width, height) * 0.045));
+	let pad = Math.max(8, Math.round(fs * 0.6));
+	let w = Math.min(360, Math.round(width * 0.7));
+	let h = fs + pad * 2;
+	bankSelect.position(Math.round((width - w) / 2), Math.round((height - h) / 2));
+	bankSelect.style('font-size', fs + 'px');
+	bankSelect.style('padding', pad + 'px');
+	bankSelect.style('width', w + 'px');
+	bankSelect.style('height', h + 'px');
+	bankSelect.style('text-align', 'center');
+	bankSelect.style('border-radius', '12px');
+}
+
 function showBankSelect() {
 	bankSelect = createSelect();
-	bankSelect.position(width / 2 - 90, height / 2 - 15);
 	bankSelect.option('Choose sound bank…', '');
 	bankSelect.option('Alert sounds', 'alert');
 	bankSelect.option('Impact sounds', 'impact');
@@ -103,6 +117,7 @@ function showBankSelect() {
 		bankSelect = null;
 		loadBank(name);
 	});
+	layoutBankSelect();
 	redraw();
 }
 
@@ -241,6 +256,7 @@ function mousePressed() {
 // Single-tap response on touch devices (iOS fires touch events, not clicks;
 // returning false also suppresses the browser's double-tap-zoom default).
 function touchStarted() {
+	if (bankSelect) return true; // let iOS handle the native dropdown
 	mousePressed();
 	return false;
 }
@@ -260,6 +276,6 @@ function isGameOver() {
 
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
-	if (bankSelect) bankSelect.position(width / 2 - 90, height / 2 - 15);
+	if (bankSelect) layoutBankSelect();
 	redraw();
 }
