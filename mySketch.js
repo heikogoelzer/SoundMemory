@@ -1,14 +1,44 @@
 // SoundMemory — a sound memory game
 // Heiko Gölzer 2026
 
-// Sound files: 14 sounds, 2 copies each = 28 cards
-const FILES = [
-	'Basso', 'Blow', 'Bottle', 'Frog', 'Funk', 'Glass', 'Hero', 'Morse',
-	'Ping', 'Pop', 'Purr', 'Sosumi', 'Submarine', 'Tink'
-];
+// Sound banks: each has 14 sounds, 2 copies each = 28 cards
+const SOUND_BANKS = {
+	alert: {
+		dir: 'sounds_alert',
+		files: [
+			'Basso', 'Blow', 'Bottle', 'Frog', 'Funk', 'Glass', 'Hero', 'Morse',
+			'Ping', 'Pop', 'Purr', 'Sosumi', 'Submarine', 'Tink'
+		]
+	},
+	impact: {
+		dir: 'sounds_impact',
+		files: [
+			'footstep_concrete_004', 'footstep_snow_002', 'impactBell_heavy_000',
+			'impactBell_heavy_001', 'impactGeneric_light_000', 'impactGlass_heavy_001',
+			'impactGlass_medium_000', 'impactMetal_heavy_000', 'impactMetal_light_003',
+			'impactPlate_heavy_001', 'impactPlate_light_003', 'impactSoft_heavy_002',
+			'impactTin_medium_003', 'impactWood_medium_001'
+		]
+	},
+	birds: {
+		dir: 'sounds_birds',
+		files: [
+			'mixkit-big-wild-eagle-calling-70', 'mixkit-bird-screeching-in-the-jungle-2436',
+			'mixkit-chickens-clucking-short-1772', 'mixkit-cockatoo-bird-squawk-2437',
+			'mixkit-double-little-bird-chirp-21', 'mixkit-forest-bird-singing-1211',
+			'mixkit-forest-birds-singing-1212', 'mixkit-hawk-bird-squawk-1268',
+			'mixkit-little-bird-calling-chirp-23', 'mixkit-melodic-songbird-chirp-67',
+			'mixkit-melodic-songbird-chirp-in-the-wild-68', 'mixkit-toy-whistler-bird-sound-18',
+			'mixkit-tropical-bird-squeak-27', 'mixkit-wild-raven-bird-calling-62'
+		]
+	}
+};
+
+let bankName = 'alert';
+let FILES = SOUND_BANKS[bankName].files;
 
 const COLS = 4;
-const ROWS = FILES.length * 2 / COLS; // 7
+let ROWS = FILES.length * 2 / COLS; // 7
 
 // 5 pale rainbow colors, cycled across tiles
 const PALETTE = [
@@ -42,15 +72,49 @@ let locked = false;   // true while waiting after a mismatch
 let tries = 0;        // number of bids (two cards revealed)
 let matches = 0;      // number of found pairs
 
+let bankSelect = null; // sound-bank dropdown shown at start
+let tapTimes = [];      // timestamps of taps on the secret tile (start only)
+let secretArmed = true; // hidden triple-tap active until any other tile is played
+
+const TAP_WINDOW = 600; // ms allowed for the triple-tap
+
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 	rectMode(CENTER);
 	textAlign(CENTER, CENTER);
-	for (let name of FILES) {
-		sounds[name] = new Audio('sounds/' + name + '.mp3');
+
+	// Start as before: alert bank plays immediately. The bank selector is hidden —
+	// triple-tap the lower-right tile before any other play to reveal it.
+	loadBank('alert');
+	noLoop();
+}
+
+function showBankSelect() {
+	bankSelect = createSelect();
+	bankSelect.position(width / 2 - 90, height / 2 - 15);
+	bankSelect.option('Choose sound bank…', '');
+	bankSelect.option('Alert sounds', 'alert');
+	bankSelect.option('Impact sounds', 'impact');
+	bankSelect.option('Bird sounds', 'birds');
+	bankSelect.changed(() => {
+		let name = bankSelect.value();
+		if (!name) return; // placeholder still selected
+		bankSelect.remove();
+		bankSelect = null;
+		loadBank(name);
+	});
+	redraw();
+}
+
+function loadBank(name) {
+	bankName = name;
+	FILES = SOUND_BANKS[name].files;
+	ROWS = FILES.length * 2 / COLS;
+	sounds = {};
+	for (let f of FILES) {
+		sounds[f] = new Audio(SOUND_BANKS[name].dir + '/' + f + '.mp3');
 	}
 	startGame();
-	noLoop();
 }
 
 function startGame() {
@@ -63,6 +127,8 @@ function startGame() {
 	locked = false;
 	tries = 0;
 	matches = 0;
+	secretArmed = true; // re-arm the hidden bank-selector gesture
+	tapTimes = [];
 	redraw();
 }
 
@@ -96,7 +162,7 @@ function draw() {
 	textSize(min(cw, ch) * 0.2);
 	text('B:' + tries + ' M:' + matches, (COLS - 0.5) * cw, (ROWS - 0.5) * ch);
 
-	if (isGameOver()) {
+	if (mapping.length && isGameOver()) {
 		fill(0);
 		textSize(min(width, height) / 12);
 		text('Done in ' + tries + ' bids!', width / 2, height / 2);
@@ -105,7 +171,24 @@ function draw() {
 
 function mousePressed() {
 	if (locked) return;
+	if (bankSelect) return; // bank selector open: ignore tile clicks
 	let i = cardAt(mouseX, mouseY);
+
+	// Hidden gesture: triple-tap the lower-right tile before any other play
+	// reveals the sound-bank selector. Taps here are consumed silently.
+	if (secretArmed && mapping.length && i === mapping.length - 1) {
+		let now = Date.now();
+		tapTimes = tapTimes.filter(t => now - t < TAP_WINDOW);
+		tapTimes.push(now);
+		if (tapTimes.length >= 3) {
+			tapTimes = [];
+			secretArmed = false;
+			showBankSelect();
+		}
+		return;
+	}
+	secretArmed = false; // any other first click disarms the hidden gesture
+
 	if (i === null || state[i] !== 'hidden') return;
 
 	// Rewind so a second play of the same Audio restarts instead of being ignored.
@@ -177,5 +260,6 @@ function isGameOver() {
 
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
+	if (bankSelect) bankSelect.position(width / 2 - 90, height / 2 - 15);
 	redraw();
 }
