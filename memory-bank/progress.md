@@ -20,7 +20,7 @@ Stable and feature-complete per the project brief. No known bugs.
 - [x] Added `sounds_impact/` (Kenney CC0, credited in README)
 - [x] Added `sounds_birds/` (mixkit, credited in README)
 - [x] `SOUND_BANKS` map + `loadBank()`; hidden bank selector (triple-tap lower-right tile, 600 ms window, re-arms each game)
-- [x] `sw.js` precache extended to all 42 MP3s; cache `soundmemory-cache-v0`
+- [x] `sw.js` precache extended to all 42 MP3s; cache `soundmemory-cache-v0` (current)
 - [x] README + memory-bank updated to current state
 
 ## Backlog (not started)
@@ -38,5 +38,7 @@ Stable and feature-complete per the project brief. No known bugs.
 - Manual testing only — no automated tests; user verifies by hand (local server + browser).
 
 ## Changelog
-- **2026-09-22** — Single-tap touch fix: `touchStarted()` calls `mousePressed()` and returns false; `canvas { touch-action: manipulation; }` in style.css; SW cache bumped to v4.
+- **2026-09-22** — Single-tap touch fix: `touchStarted()` calls `mousePressed()` and returns false; `canvas { touch-action: manipulation; }` in style.css.
 - **2026-09-24** — Three sound banks (alert/impact/birds), hidden bank selector via lower-right tile triple-tap, score counter, 500 ms animations, README + memory-bank docs updated.
+
+Note: earlier cache-version mentions (v3/v4) were inaccurate; `sw.js` currently ships `soundmemory-cache-v0`.
