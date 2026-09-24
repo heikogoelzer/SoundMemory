@@ -68,21 +68,22 @@ iOS double-tap zoom.
 
 ### PWA / Offline
 
-`sw.js` pre-caches all app assets (HTML, CSS, JS, icon, all 42 MP3s across all
-three sound banks, and the p5.js CDN URL) at install. Fetch handler is
-**cache-first** with network fallback. Cache version key: `soundmemory-cache-v0`
-— bump it when assets change.
+`sw.js` pre-caches all app assets (HTML, CSS, JS, icon, manifest, all 42 MP3s
+across all three sound banks, and the p5.js CDN URL) at install. Caching is
+**per-asset** — one missing file logs a warning instead of failing the whole
+install. Fetch handler is **cache-first** with network fallback. Cache version
+key: `soundmemory-cache-v1` — bump it when assets change.
 
 ## Files
 
 | File                  | Role                                            |
 | --------------------- | ----------------------------------------------- |
-| `index.html`          | Entry page; loads p5.js, sketch, CSS, registers SW |
+| `index.html`          | Entry page; loads p5.js, sketch, CSS, registers SW; viewport + PWA metas |
 | `mySketch.js`         | Game logic: grid, shuffle, matching, rendering  |
 | `style.css`           | Minimal CSS reset                               |
 | `sw.js`               | Service worker (cache-first, offline support)   |
 | `manifest.json`       | PWA manifest (standalone, icons)                |
-| `apple-touch-icon.png`| App icon (180×180 / 512×512)                    |
+| `apple-touch-icon.png`| App icon (180×180; manifest declares 512 — see backlog) |
 | `sounds_alert/`       | 14 alert MP3 sound files                       |
 | `sounds_impact/`      | 14 impact MP3 sound files (Kenney)             |
 | `sounds_birds/`       | 14 bird MP3 sound files (mixkit)               |

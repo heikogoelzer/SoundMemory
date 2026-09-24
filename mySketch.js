@@ -34,8 +34,7 @@ const SOUND_BANKS = {
 	}
 };
 
-let bankName = 'alert';
-let FILES = SOUND_BANKS[bankName].files;
+let FILES = SOUND_BANKS.alert.files;
 
 const COLS = 4;
 let ROWS = FILES.length * 2 / COLS; // 7
@@ -51,11 +50,11 @@ const PALETTE = [
 
 // Saturated/darker counterpart of each PALETTE color (same hue order)
 const PALETTE_DARK = [
-[200, 60, 60],   // red
-[225, 170, 40],  // yellow
-[60, 180, 60],   // green
-[60, 110, 200],  // blue
-[140, 60, 220]   // purple
+	[200, 60, 60],   // red
+	[225, 170, 40],  // yellow
+	[60, 180, 60],   // green
+	[60, 110, 200],  // blue
+	[140, 60, 220]   // purple
 ];
 
 // Mid-saturation rainbow: halfway between PALETTE and PALETTE_DARK
@@ -77,9 +76,13 @@ let tapTimes = [];      // timestamps of taps on the secret tile (start only)
 let secretArmed = true; // hidden triple-tap active until any other tile is played
 
 const TAP_WINDOW = 600; // ms allowed for the triple-tap
+const MATCH_MS = 500;   // match celebration / mismatch re-hide duration
+const TICK_MS = 50;     // celebration rainbow animation step
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);
+	document.querySelector('canvas').setAttribute('role', 'img');
+	document.querySelector('canvas').setAttribute('aria-label', 'SoundMemory: find all matching sound pairs on the 4×7 grid');
 	rectMode(CENTER);
 	textAlign(CENTER, CENTER);
 
@@ -118,7 +121,6 @@ function showBankSelect() {
 }
 
 function loadBank(name) {
-	bankName = name;
 	FILES = SOUND_BANKS[name].files;
 	ROWS = FILES.length * 2 / COLS;
 	sounds = {};
@@ -149,7 +151,6 @@ function draw() {
 	// each draw(), so windowResized() just needs resizeCanvas + redraw().
 	let cw = width / COLS, ch = height / ROWS;
 	let tw = cw * 0.9, th = ch * 0.9; // tiles with 5% margin all around
-	textSize(min(cw, ch) * 0.2);
 
 	for (let i = 0; i < mapping.length; i++) {
 		let x = (i % COLS + 0.5) * cw;
@@ -208,43 +209,43 @@ function mousePressed() {
 	let s = sounds[mapping[i]];
 	s.pause();
 	s.currentTime = 0;
-	s.play();
+	s.play().catch(() => {}); // ignore autoplay/decode rejections
 	state[i] = 'up';
 
 	if (choice1 === null) {
 		choice1 = i;
-	} else if (mapping[choice1] === mapping[i]) {
-		// Match: celebrate with a 500 ms rainbow cycle, then vanish into the background
-		tries++; // a bid = two cards revealed
-		matches++;
-		locked = true;
-		let a = choice1, b = i;
-		state[a] = 'celebrate';
-		state[b] = 'celebrate';
-		choice1 = null;
-		let tick = setInterval(() => {
-			frameCount++;
-			redraw();
-		}, 50); // 50 ms step x 5 colors = 250 ms per cycle -> 2 cycles in 500 ms
-		setTimeout(() => {
-			clearInterval(tick);
-			state[a] = 'done';
-			state[b] = 'done';
-			locked = false;
-			redraw();
-		}, 500);
 	} else {
-		// Mismatch: show both briefly, then hide again
-		tries++; // a bid = two cards revealed
+		// A bid = two cards revealed; lock until the animation finishes
+		tries++;
 		locked = true;
 		let a = choice1, b = i;
 		choice1 = null;
-		setTimeout(() => {
-			state[a] = 'hidden';
-			state[b] = 'hidden';
-			locked = false;
-			redraw();
-		}, 500);
+
+		if (mapping[a] === mapping[b]) {
+			// Match: celebrate with a 500 ms rainbow cycle, then vanish
+			matches++;
+			state[a] = 'celebrate';
+			state[b] = 'celebrate';
+			let tick = setInterval(() => {
+				frameCount++;
+				redraw();
+			}, TICK_MS); // 5 colors x 50 ms = 250 ms per cycle -> 2 cycles in 500 ms
+			setTimeout(() => {
+				clearInterval(tick);
+				state[a] = 'done';
+				state[b] = 'done';
+				locked = false;
+				redraw();
+			}, MATCH_MS);
+		} else {
+			// Mismatch: show both briefly, then hide again
+			setTimeout(() => {
+				state[a] = 'hidden';
+				state[b] = 'hidden';
+				locked = false;
+				redraw();
+			}, MATCH_MS);
+		}
 	}
 	redraw();
 }

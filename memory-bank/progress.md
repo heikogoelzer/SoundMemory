@@ -12,6 +12,8 @@
 Stable and feature-complete per the project brief. No known bugs.
 
 ## Recent Work
+- [x] Code health survey → `CODE_HEALTH_REPORT.md` (12 findings + strengths)
+- [x] Code health fixes: viewport/theme-color/mobile-web-app-capable metas, canvas aria-label, `s.play().catch()`, removed dead code, hoisted bid logic, `MATCH_MS`/`TICK_MS` constants, `PALETTE_DARK` indentation, manifest precache, per-asset SW caching, cache bumped to `soundmemory-cache-v1`
 - [x] 5% tile margins + 5 cycling pale rainbow face-down colors (`PALETTE`)
 - [x] Full-screen rectangular tile layout (fills entire screen, adjusts on window resize)
 - [x] 500 ms match celebration (`PALETTE_MID` rainbow flash) and 500 ms mismatch re-hide
@@ -20,7 +22,7 @@ Stable and feature-complete per the project brief. No known bugs.
 - [x] Added `sounds_impact/` (Kenney CC0, credited in README)
 - [x] Added `sounds_birds/` (mixkit, credited in README)
 - [x] `SOUND_BANKS` map + `loadBank()`; hidden bank selector (triple-tap lower-right tile, 600 ms window, re-arms each game)
-- [x] `sw.js` precache extended to all 42 MP3s; cache `soundmemory-cache-v0` (current)
+- [x] `sw.js` precache extended to all 42 MP3s; cache `soundmemory-cache-v1` (current)
 - [x] README + memory-bank updated to current state
 
 ## Backlog (not started)
@@ -40,5 +42,6 @@ Stable and feature-complete per the project brief. No known bugs.
 ## Changelog
 - **2026-09-22** — Single-tap touch fix: `touchStarted()` calls `mousePressed()` and returns false; `canvas { touch-action: manipulation; }` in style.css.
 - **2026-09-24** — Three sound banks (alert/impact/birds), hidden bank selector via lower-right tile triple-tap, score counter, 500 ms animations, README + memory-bank docs updated.
+- **2026-09-24** — Code health fixes: viewport metas, canvas aria-label, `s.play().catch()`, dead code removal, hoisted bid logic, constants, manifest precache, per-asset SW caching, cache `soundmemory-cache-v1`.
 
-Note: earlier cache-version mentions (v3/v4) were inaccurate; `sw.js` currently ships `soundmemory-cache-v0`.
+Note: earlier cache-version mentions (v3/v4) were inaccurate; `sw.js` currently ships `soundmemory-cache-v1`.

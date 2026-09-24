@@ -1,11 +1,12 @@
-const CACHE_NAME = 'soundmemory-cache-v0';
+const CACHE_NAME = 'soundmemory-cache-v1';
 
-// Add all the files your app needs to run offline (no icon and manifest)
+// Add all the files your app needs to run offline
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/style.css',
   '/mySketch.js',
+  '/manifest.json',
   '/apple-touch-icon.png',
   '/sounds_alert/Basso.mp3',
   '/sounds_alert/Blow.mp3',
@@ -52,12 +53,17 @@ const ASSETS_TO_CACHE = [
   'https://cdn.jsdelivr.net/npm/p5@1.11.3/lib/p5.js' // p5js lib
 ];
 
-// 1. Install Event: Cache all critical files
+// 1. Install Event: Cache all critical files.
+// Cache per-asset so one missing file doesn't fail the whole install.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('Caching app assets...');
-      return cache.addAll(ASSETS_TO_CACHE);
+      return Promise.all(
+        ASSETS_TO_CACHE.map((url) =>
+          cache.add(url).catch((err) => console.warn('Failed to cache', url, err))
+        )
+      );
     }).then(() => self.skipWaiting()) // Force the waiting service worker to become active
   );
 });
