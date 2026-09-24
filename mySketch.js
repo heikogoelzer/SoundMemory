@@ -89,24 +89,20 @@ function setup() {
 	noLoop();
 }
 
-// Size and position the bank dropdown to fit the current screen (touch-friendly).
+// Size and center the bank dropdown; width auto-fits the longest option text.
 function layoutBankSelect() {
 	let fs = Math.max(16, Math.round(min(width, height) * 0.045));
 	let pad = Math.max(8, Math.round(fs * 0.6));
-	let w = Math.min(360, Math.round(width * 0.7));
-	let h = fs + pad * 2;
-	bankSelect.position(Math.round((width - w) / 2), Math.round((height - h) / 2));
 	bankSelect.style('font-size', fs + 'px');
 	bankSelect.style('padding', pad + 'px');
-	bankSelect.style('width', w + 'px');
-	bankSelect.style('height', h + 'px');
 	bankSelect.style('text-align', 'center');
 	bankSelect.style('border-radius', '12px');
+	bankSelect.center();
 }
 
 function showBankSelect() {
 	bankSelect = createSelect();
-	bankSelect.option('Choose sound bank…', '');
+	bankSelect.option('Choose sound bank', '');
 	bankSelect.option('Alert sounds', 'alert');
 	bankSelect.option('Impact sounds', 'impact');
 	bankSelect.option('Bird sounds', 'birds');
